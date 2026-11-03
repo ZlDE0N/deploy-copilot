@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" role="img" aria-labelledby="t d">
+  <title id="t">Deploy Copilot architecture</title>
+  <desc id="d">Sources are ingested into SQLite; a router sends each question to exact SQL, domain tools or hybrid retrieval; a local model writes a cited answer that is verified.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b90a8"/></marker>
+    <style>
+      .bg{fill:#0b0d17}.box{fill:#141726;stroke:#2a2f4a;stroke-width:1.5}.hl{fill:#17132e;stroke:#7c5cff;stroke-width:1.8}
+      .ok{fill:#0f1f1d;stroke:#34d399;stroke-width:1.5}.h{fill:#fff;font:700 15px -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+      .t{fill:#b7bbd3;font:12.5px -apple-system,Segoe UI,Helvetica,Arial,sans-serif}.s{fill:#8b90a8;font:11.5px -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+      .ttl{fill:#fff;font:800 20px -apple-system,Segoe UI,Helvetica,Arial,sans-serif}.ln{stroke:#8b90a8;stroke-width:1.6;fill:none;marker-end:url(#a)}
+      .tag{fill:#22d3ee;font:700 11px -apple-system,Segoe UI,Helvetica,Arial,sans-serif;letter-spacing:.8px}
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="640" rx="18"/>
+  <rect x="0" y="0" width="1200" height="6" fill="url(#g)"/>
+  <text class="ttl" x="36" y="46">Deploy Copilot · architecture</text>
+  <text class="s" x="36" y="68">100% local · Python 3.14 standard library · SQLite · local models · read-only on your systems</text>
+
+  <!-- column 1: sources -->
+  <text class="tag" x="36" y="108">1 · SOURCES (READ-ONLY)</text>
+  <rect class="box" x="36" y="120" width="230" height="64" rx="12"/><text class="h" x="52" y="146">Git repositories</text><text class="t" x="52" y="166">tree · workflows · READMEs</text>
+  <rect class="box" x="36" y="198" width="230" height="64" rx="12"/><text class="h" x="52" y="224">Incidents &amp; docs</text><text class="t" x="52" y="244">reports · audits · scripts</text>
+  <rect class="box" x="36" y="276" width="230" height="64" rx="12"/><text class="h" x="52" y="302">GitHub Actions</text><text class="t" x="52" y="322">runs via your gh session</text>
+  <rect class="box" x="36" y="354" width="230" height="64" rx="12"/><text class="h" x="52" y="380">Pipeline inventory</text><text class="t" x="52" y="400">CSV · repo types · branches</text>
+
+  <!-- column 2: ingest + store -->
+  <text class="tag" x="330" y="108">2 · INGEST &amp; STORE</text>
+  <rect class="hl" x="330" y="120" width="250" height="124" rx="12"/><text class="h" x="346" y="146">Ingestion</text>
+  <text class="t" x="346" y="168">redact secrets → chunk by structure</text><text class="t" x="346" y="187">repo manifest cards · incremental</text><text class="t" x="346" y="206">re-embed only what changed (hash)</text><text class="s" x="346" y="229">watcher: sources checked every 5 s</text>
+  <rect class="hl" x="330" y="262" width="250" height="156" rx="12"/><text class="h" x="346" y="288">SQLite (WAL)</text>
+  <text class="t" x="346" y="310">FTS5 index (BM25)</text><text class="t" x="346" y="329">vectors · bge-m3 · 1024-dim</text><text class="t" x="346" y="348">runs · repos · git stats</text><text class="t" x="346" y="367">job history · eval history</text><text class="s" x="346" y="395">no third-party Python packages</text>
+
+  <!-- column 3: question side -->
+  <text class="tag" x="644" y="108">3 · ROUTER (DETERMINISTIC)</text>
+  <rect class="hl" x="644" y="120" width="250" height="64" rx="12"/><text class="h" x="660" y="146">Question router</text><text class="t" x="660" y="166">picks tools BEFORE the model speaks</text>
+  <rect class="ok" x="644" y="198" width="250" height="52" rx="12"/><text class="h" x="660" y="220">Exact SQL</text><text class="t" x="660" y="239">counts and lists, never guessed</text>
+  <rect class="ok" x="644" y="262" width="250" height="52" rx="12"/><text class="h" x="660" y="284">Domain tools</text><text class="t" x="660" y="303">migration · failures · DORA · repo card</text>
+  <rect class="hl" x="644" y="326" width="250" height="92" rx="12"/><text class="h" x="660" y="350">Hybrid retrieval</text><text class="t" x="660" y="370">BM25 + n-grams + embeddings</text><text class="t" x="660" y="388">RRF fusion → domain rerank</text><text class="s" x="660" y="408">falls back if embeddings are down</text>
+
+  <!-- column 4: answer -->
+  <text class="tag" x="958" y="108">4 · ANSWER</text>
+  <rect class="hl" x="958" y="120" width="206" height="124" rx="12"/><text class="h" x="974" y="146">Local LLM</text><text class="t" x="974" y="168">Qwen2.5 7B · GPU (host)</text><text class="t" x="974" y="187">Ollama CPU as fallback</text><text class="t" x="974" y="206">numbered sources only</text><text class="s" x="974" y="229">streams over SSE</text>
+  <rect class="ok" x="958" y="262" width="206" height="92" rx="12"/><text class="h" x="974" y="288">Verification</text><text class="t" x="974" y="308">citations exist</text><text class="t" x="974" y="326">figures appear in sources</text><text class="s" x="974" y="345">not a proof of correctness</text>
+  <rect class="box" x="958" y="366" width="206" height="52" rx="12"/><text class="h" x="974" y="388">Human clicks</text><text class="t" x="974" y="406">buttons only, never auto-run</text>
+
+  <!-- arrows -->
+  <path class="ln" d="M266 152 L322 170"/><path class="ln" d="M266 230 L322 200"/><path class="ln" d="M266 308 L322 330"/><path class="ln" d="M266 386 L322 366"/>
+  <path class="ln" d="M455 244 L455 254"/>
+  <path class="ln" d="M580 340 L636 372"/>
+  <path class="ln" d="M894 152 L950 170"/><path class="ln" d="M894 372 L950 200"/><path class="ln" d="M1060 244 L1060 254"/>
+  <path class="ln" d="M894 224 L950 306"/>
+
+  <!-- ui strip -->
+  <rect class="box" x="36" y="452" width="1128" height="150" rx="14"/>
+  <text class="tag" x="56" y="480">REAL-TIME UI · localhost only · strict CSP · X-Copilot header on API calls</text>
+  <rect class="hl" x="56" y="496" width="170" height="84" rx="10"/><text class="h" x="70" y="522">Dashboard</text><text class="t" x="70" y="542">migration · pipelines</text><text class="t" x="70" y="560">readiness · live feed</text>
+  <rect class="hl" x="240" y="496" width="170" height="84" rx="10"/><text class="h" x="254" y="522">Projects</text><text class="t" x="254" y="542">plan · workflow draft</text><text class="t" x="254" y="560">runbook · real data</text>
+  <rect class="hl" x="424" y="496" width="170" height="84" rx="10"/><text class="h" x="438" y="522">Copilot chat</text><text class="t" x="438" y="542">cited answers</text><text class="t" x="438" y="560">proposed actions</text>
+  <rect class="hl" x="608" y="496" width="170" height="84" rx="10"/><text class="h" x="622" y="522">Search</text><text class="t" x="622" y="542">per-signal ranks</text><text class="t" x="622" y="560">pipeline trace</text>
+  <rect class="hl" x="792" y="496" width="170" height="84" rx="10"/><text class="h" x="806" y="522">Operations</text><text class="t" x="806" y="542">manual, repeatable jobs</text><text class="t" x="806" y="560">live logs · history</text>
+  <rect class="hl" x="976" y="496" width="170" height="84" rx="10"/><text class="h" x="990" y="522">How it works</text><text class="t" x="990" y="542">pipeline explained</text><text class="t" x="990" y="560">evaluation</text>
+  <path class="ln" d="M60 424 L60 446" style="stroke-dasharray:4 4"/>
+</svg>

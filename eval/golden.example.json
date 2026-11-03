@@ -1,0 +1,8 @@
+[
+  {"q": "what was the root cause of the 502 errors", "expect": "INCIDENT_5XX_REPORT"},
+  {"q": "outbound connection exhaustion under traffic spikes", "expect": "INCIDENT_5XX_REPORT"},
+  {"q": "how did we migrate repositories with large files", "expect": "lfs_migrate.sh"},
+  {"q": "remove blobs above the size limit from history", "expect": "filter_migrate.sh"},
+  {"q": "findings of the security audit", "expect": "SECURITY-AUDIT.md"},
+  {"q": "type and pipeline of the payments service", "expect": "payments-api"}
+]

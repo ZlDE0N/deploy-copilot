@@ -1,0 +1,9 @@
+data/
+models/
+docker-models/
+shots/
+eval/golden.json
+.env
+__pycache__/
+*.pyc
+.DS_Store
