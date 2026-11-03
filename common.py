@@ -38,20 +38,29 @@ _PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[^\n]*")
 _AAD_SECRET = re.compile(r"[A-Za-z0-9_.~-]{3}\dQ~[A-Za-z0-9_.~-]{20,}")
 
 
-# A value is left untouched ONLY if the whole value is a known variable-reference syntax (or an existing redaction marker).
-# Anything else, including values that merely START like a reference, is a literal and gets redacted.
+# A value is left untouched ONLY by the name-based rule, and ONLY if the WHOLE value is an unambiguous reference
+# (strict identifier grammar, no quotes/operators/calls) or an existing redaction marker. Bare `$NAME`, `%NAME%` and
+# `${NAME}` are NOT accepted: they cannot be told apart from a literal password. The generic and connection-string
+# rules always redact (fail closed), except for an existing redaction marker, so redact() stays idempotent.
 _REF = re.compile(
-    r"\$\{\{[^{}\s][^{}]{0,200}\}\}"            # ${{secrets.NAME}}  (GitHub Actions)
-    r"|\$\{[A-Za-z_][A-Za-z0-9_]{0,100}\}"        # ${NAME}
-    r"|\$\([A-Za-z_][A-Za-z0-9_.]{0,100}\)"       # $(name)  (Azure Pipelines / shell)
-    r"|\$[A-Za-z_][A-Za-z0-9_]{0,100}"             # $NAME
-    r"|%[A-Za-z_][A-Za-z0-9_]{0,100}%"              # %NAME%
-    r"|\[REDACTED[A-Z_]*\]"                        # already redacted (keeps redact() idempotent)
+    r"\$\{\{\s{0,3}(?:secrets|vars|env|inputs|github|steps|needs|matrix)(?:\.[A-Za-z0-9_-]{1,100}){1,4}\s{0,3}\}\}"  # ${{ secrets.NAME }}
+    r"|\$\([A-Za-z_][A-Za-z0-9_.]{0,100}\)"                                                                           # $(name)
 )
+_MARKER = re.compile(r"\[REDACTED[A-Z_]*\]")
+
+
+def _unquote(v: str) -> str:
+    """Remove exactly one pair of matching surrounding quotes (never strip repeatedly)."""
+    return v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'" else v
 
 
 def _is_ref(value: str) -> bool:
-    return _REF.fullmatch(value.strip("\"'")) is not None
+    v = _unquote(value)
+    return _REF.fullmatch(v) is not None or _MARKER.fullmatch(v) is not None
+
+
+def _is_marker(value: str) -> bool:
+    return _MARKER.fullmatch(_unquote(value)) is not None
 
 
 def _env_repl(m: "re.Match[str]") -> str:
@@ -64,11 +73,11 @@ def _env_repl_key(m: "re.Match[str]") -> str:
 
 
 def _conn_repl(m: "re.Match[str]") -> str:
-    return m.group(0) if _is_ref(m.group(2)) else m.group(1) + "=[REDACTED]"
+    return m.group(0) if _is_marker(m.group(2)) else m.group(1) + "=[REDACTED]"
 
 
 def _generic_repl(m: "re.Match[str]") -> str:
-    return m.group(0) if _is_ref(m.group(3)) else m.group(1) + m.group(2) + "[REDACTED]"
+    return m.group(0) if _is_marker(m.group(3)) else m.group(1) + m.group(2) + "[REDACTED]"
 
 
 def safe_cap(text: str, limit: int) -> str:

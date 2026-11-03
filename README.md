@@ -244,6 +244,7 @@ The semantic and hybrid figures were measured with embeddings online. Without th
 - **Hand-written rules:** strategy and workflow templates, re-rank weights, readiness and risk policies are the author's judgement — not measured or learned — and **have not been validated with the people who deploy**. Generated workflows are valid YAML but have not been executed.
 - **"Ensayar plan":** an animation of the steps; it tests nothing against real systems.
 - **`history_azure`:** implemented, untested.
+- **Secret redaction is heuristic:** it is token-based, so values shorter than 6 characters or containing spaces are not caught, and a literal secret written exactly like a delimited reference (e.g. `$(name)`) is kept by the name-based rule. Generic and connection-string rules always redact. The index is audited with `gitleaks`, which is also heuristic: do not point the tool at repositories that contain secrets you cannot rotate.
 - **No licence yet.**
 
 ## Project layout
