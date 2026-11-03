@@ -15,8 +15,8 @@ _REDACTIONS = [
     (re.compile(r"(https?://)[^/\s@]+@"), r"\1[REDACTED]@"),
     (re.compile(r"AKIA[0-9A-Z]{16}"), "[REDACTED_AWS_KEY]"),
     (re.compile(r"(?i)\b(password|passwd|secret|token|api[_-]?key|pat|connectionstring|sas)\b(\s*[:=]\s*)(\"[^\"]+\"|'[^']+'|[^\s\"',;]{6,})"),
-     r"\1\2[REDACTED]"),
-    (re.compile(r"(?i)(AccountKey|SharedAccessKey|Password)=[^;\s\"']+"), r"\1=[REDACTED]"),
+     "GENERIC"),
+    (re.compile(r"(?i)(AccountKey|SharedAccessKey|Password)=([^;\s\"']+)"), "CONN"),
     (re.compile(r"\b[A-Za-z0-9+/]{60,}={0,2}\b"), "[REDACTED_LONG_TOKEN]"),
 ]
 
@@ -38,16 +38,37 @@ _PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[^\n]*")
 _AAD_SECRET = re.compile(r"[A-Za-z0-9_.~-]{3}\dQ~[A-Za-z0-9_.~-]{20,}")
 
 
+# A value is left untouched ONLY if the whole value is a known variable-reference syntax (or an existing redaction marker).
+# Anything else, including values that merely START like a reference, is a literal and gets redacted.
+_REF = re.compile(
+    r"\$\{\{[^{}\s][^{}]{0,200}\}\}"            # ${{secrets.NAME}}  (GitHub Actions)
+    r"|\$\{[A-Za-z_][A-Za-z0-9_]{0,100}\}"        # ${NAME}
+    r"|\$\([A-Za-z_][A-Za-z0-9_.]{0,100}\)"       # $(name)  (Azure Pipelines / shell)
+    r"|\$[A-Za-z_][A-Za-z0-9_]{0,100}"             # $NAME
+    r"|%[A-Za-z_][A-Za-z0-9_]{0,100}%"              # %NAME%
+    r"|\[REDACTED[A-Z_]*\]"                        # already redacted (keeps redact() idempotent)
+)
+
+
+def _is_ref(value: str) -> bool:
+    return _REF.fullmatch(value.strip("\"'")) is not None
+
+
 def _env_repl(m: "re.Match[str]") -> str:
-    val = m.group(2)
-    # keep variable references (useful for understanding pipelines), hide literals
-    if val.startswith(("$", "[REDACTED", "<", "{{", "%", "#")):
-        return m.group(0)
-    return m.group(1) + "[REDACTED]"
+    return m.group(0) if _is_ref(m.group(2)) else m.group(1) + "[REDACTED]"
 
 
 def _env_repl_key(m: "re.Match[str]") -> str:
-    return m.group(1) + "[REDACTED]" if not m.group(2).startswith("REDACTED") else m.group(0)
+    # value class excludes `$ % [ {`, so it can never be a reference: always a literal
+    return m.group(1) + "[REDACTED]"
+
+
+def _conn_repl(m: "re.Match[str]") -> str:
+    return m.group(0) if _is_ref(m.group(2)) else m.group(1) + "=[REDACTED]"
+
+
+def _generic_repl(m: "re.Match[str]") -> str:
+    return m.group(0) if _is_ref(m.group(3)) else m.group(1) + m.group(2) + "[REDACTED]"
 
 
 def safe_cap(text: str, limit: int) -> str:
@@ -65,7 +86,7 @@ def redact(text: str) -> str:
     text = _ENV_SECRET.sub(_env_repl, text)
     text = _KEY_VALUE.sub(_env_repl_key, text)
     for rx, rep in _REDACTIONS:
-        text = rx.sub(rep, text)
+        text = rx.sub({"GENERIC": _generic_repl, "CONN": _conn_repl}.get(rep, rep), text)
     text = _PRIVATE_KEY.sub("[REDACTED_PRIVATE_KEY]", text)
     text = _AAD_SECRET.sub("[REDACTED_AAD_SECRET]", text)
     return text
